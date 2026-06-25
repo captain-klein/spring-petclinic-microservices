@@ -1,0 +1,61 @@
+global:
+  imageRegistry: 723021801323.dkr.ecr.us-east-1.amazonaws.com
+  imageTag: latest
+  imagePullPolicy: IfNotPresent
+
+database:
+  enabled: true
+  secretName: pet-clinic-env
+
+services:
+  config-server:
+    image: spring-petclinic-config-server
+    port: 8888
+    replicas: 1
+    probes:
+      path: /
+      initialDelaySeconds: 60
+      timeoutSeconds: 10  
+
+  discovery-server:
+    image: spring-petclinic-discovery-server
+    port: 8761
+    replicas: 1
+
+  api-gateway:
+    image: spring-petclinic-api-gateway
+    port: 8080
+    replicas: 1
+
+  customers-service:
+    image: spring-petclinic-customers-service
+    port: 8081
+    replicas: 1
+    mysql: true
+
+  visits-service:
+    image: spring-petclinic-visits-service
+    port: 8082
+    replicas: 1
+    mysql: true
+
+  vets-service:
+    image: spring-petclinic-vets-service
+    port: 8083
+    replicas: 1
+    mysql: true
+
+  admin-server:
+    image: spring-petclinic-admin-server
+    port: 9090
+    replicas: 1
+
+  genai-service:
+    image: spring-petclinic-genai-service
+    port: 8084
+    replicas: 1
+
+ingress:
+  enabled: true
+  className: nginx
+  host: petclinic.dev.not1990wesite.com
