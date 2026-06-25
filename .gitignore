@@ -1,6 +1,7 @@
 # Maven
 target/
 !.mvn/wrapper/maven-wrapper.jar
+/spring-petclinic-*.jar
 
 # Jenv
 .java-version
