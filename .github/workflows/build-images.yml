@@ -1,0 +1,76 @@
+name: Build Images
+
+on:
+  push:
+    branches: [main, PET-01]
+  workflow_dispatch:
+
+env:
+  AWS_REGION: ${{ vars.AWS_REGION }}
+  ECR_REGISTRY: ${{ secrets.ECR_REPOSITORY }}
+
+jobs:
+  build-images:
+    runs-on: ubuntu-latest
+    environment: production
+
+    permissions:
+      id-token: write
+      contents: read
+
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - spring-petclinic-admin-server
+          - spring-petclinic-api-gateway
+          - spring-petclinic-config-server
+          - spring-petclinic-customers-service
+          - spring-petclinic-discovery-server
+          - spring-petclinic-vets-service
+          - spring-petclinic-visits-service
+          - spring-petclinic-genai-service
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set image tag
+        run: echo "IMAGE_TAG=${GITHUB_SHA::7}" >> "$GITHUB_ENV"
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: maven
+
+      - name: Build Maven artifact
+        run: ./mvnw -pl ${{ matrix.service }} -am clean package -DskipTests
+
+      - name: Prepare Docker artifact
+        run: cp ${{ matrix.service }}/target/*.jar ./${{ matrix.service }}.jar
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+
+      - name: Login to ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push image
+        run: |
+          docker build \
+            -f docker/Dockerfile \
+            --build-arg ARTIFACT_NAME=${{ matrix.service }} \
+            --build-arg EXPOSED_PORT=8080 \
+            -t $ECR_REGISTRY/${{ matrix.service }}:${IMAGE_TAG} \
+            -t $ECR_REGISTRY/${{ matrix.service }}:latest \
+            .
+
+          docker push $ECR_REGISTRY/${{ matrix.service }}:${IMAGE_TAG}
+          docker push $ECR_REGISTRY/${{ matrix.service }}:latest
+
+          rm -f ./${{ matrix.service }}.jar
