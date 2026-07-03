@@ -82,7 +82,7 @@ resource "argocd_application" "deploy" {
     source {
       repo_url        = argocd_repository.repository.repo
       path            = "chart/petclinic"
-      target_revision = "PET-02"
+      target_revision = "main"
     }
   }
 }
