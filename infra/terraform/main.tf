@@ -72,10 +72,10 @@ resource "argocd_application" "deploy" {
   }
 
   spec {
-    project = "lab-talos-workloads"
+    project = "talos-workloads"
 
     destination {
-      server    = "https://192.168.50.180:6443"
+      server    = "https://192.168.80.240:6443"
       namespace = kubernetes_namespace_v1.app.metadata[0].name
     }
 
@@ -175,12 +175,12 @@ data "vault_kv_secret_v2" "petc_clinic" {
 }
 
 resource "portainer_stack" "db" {
-  name                          = "casa-pet-clinic-db"
+  name                          = "workloads-pet-clinic-db"
   deployment_type               = "standalone"
   method                        = "repository"
   endpoint_id                   = 3
   repository_url                = "https://github.com/captain-klein/spring-petclinic-microservices.git"
-  repository_reference_name     = "refs/heads/PET-02"
+  repository_reference_name     = "refs/heads/main"
   file_path_in_repository       = "docker/docker-compose-db.yaml"
   tlsskip_verify                = false
   pull_image                    = true
